@@ -1,31 +1,25 @@
 // App.js
-//
-import { useEffect, useState } from 'react';
+// Application shell: topbar (brand + canvas actions), node palette, canvas,
+// and the submit action. All state lives in the store or the theme hook.
+// --------------------------------------------------
+
 import { PipelineToolbar } from './toolbar';
 import { PipelineUI } from './ui';
 import { SubmitButton } from './submit';
 import { useStore } from './store';
+import { useTheme } from './useTheme';
 import { Icon } from './icons';
-
-const THEME_STORAGE_KEY = 'vectorshift-theme';
-
-const getSavedTheme = () => {
-  const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
-};
 
 function App() {
   const hasNodes = useStore((state) => state.nodes.length > 0);
   const clearPipeline = useStore((state) => state.clearPipeline);
-  const [theme, setTheme] = useState(getSavedTheme);
+  const { theme, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
+  const isDark = theme === 'dark';
+  const themeLabel = `Switch to ${isDark ? 'light' : 'dark'} mode`;
 
   return (
-    <div className="pipeline-app" data-theme={theme}>
+    <div className="pipeline-app">
       <header className="app-topbar">
         <div className="brand-lockup" aria-label="VectorShift Pipeline Builder">
           <span>
@@ -47,27 +41,30 @@ function App() {
           </button>
           <button
             className={`theme-icon-toggle theme-icon-toggle--${theme}`}
-            onClick={() => setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'))}
+            onClick={toggleTheme}
             type="button"
             role="switch"
-            aria-checked={theme === 'dark'}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            data-tooltip={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-checked={isDark}
+            aria-label={themeLabel}
+            data-tooltip={themeLabel}
+            title={themeLabel}
           >
             <span className="theme-icon-toggle__thumb" aria-hidden="true">
-              <Icon name={theme === 'dark' ? 'moon' : 'sun'} size={13} />
+              <Icon name={isDark ? 'moon' : 'sun'} size={13} />
             </span>
             <Icon name="sun" size={12} className="theme-icon-toggle__sun" />
             <Icon name="moon" size={12} className="theme-icon-toggle__moon" />
           </button>
         </div>
       </header>
+
       <PipelineToolbar />
       <PipelineUI />
+
       <div className="pipeline-actions">
         <SubmitButton />
       </div>
+
       <span className="project-watermark" aria-label="Project by Kumar Shashank">
         Developed by Kumar Shashank
       </span>

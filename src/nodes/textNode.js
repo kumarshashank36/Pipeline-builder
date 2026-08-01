@@ -135,7 +135,7 @@ export const TextNode = ({ id, data, selected }) => {
       </div>
 
       {variables.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="var-chip-list">
           {variables.map((name) => (
             <span key={name} className="var-chip">
               {name}

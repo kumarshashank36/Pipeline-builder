@@ -22,8 +22,24 @@ import { DeletableEdge } from './DeletableEdge';
 
 import 'reactflow/dist/style.css';
 
-const gridSize = 20;
-const proOptions = { hideAttribution: true };
+const GRID_SIZE = 20;
+const PRO_OPTIONS = { hideAttribution: true };
+const DRAG_MIME = 'application/reactflow';
+const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
+const DELETE_KEYS = ['Backspace', 'Delete'];
+const FALLBACK_ACCENT = '#6c6cf5';
+
+const getInitNodeData = (nodeID, type) => ({ id: nodeID, nodeType: type });
+
+const getNodeAccent = (node) => NODE_CONFIGS[node.type]?.accent || FALLBACK_ACCENT;
+
+const getDroppedNodeType = (payload) => {
+  try {
+    return JSON.parse(payload)?.nodeType;
+  } catch {
+    return null;
+  }
+};
 
 const nodeTypes = {
   customInput: InputNode,
@@ -63,30 +79,25 @@ export const PipelineUI = () => {
     shallow
   );
 
-  const getInitNodeData = (nodeID, type) => ({ id: nodeID, nodeType: `${type}` });
-
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
+      if (!reactFlowInstance || !reactFlowWrapper.current) return;
 
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      if (event?.dataTransfer?.getData('application/reactflow')) {
-        const appData = JSON.parse(event.dataTransfer.getData('application/reactflow'));
-        const type = appData?.nodeType;
+      const payload = event.dataTransfer?.getData(DRAG_MIME);
+      if (!payload) return;
 
-        // check if the dropped element is valid
-        if (typeof type === 'undefined' || !type) {
-          return;
-        }
+      const type = getDroppedNodeType(payload);
+      if (!type || !NODE_CONFIGS[type]) return;
 
-        const position = reactFlowInstance.project({
-          x: event.clientX - reactFlowBounds.left,
-          y: event.clientY - reactFlowBounds.top,
-        });
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = reactFlowInstance.project({
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      });
 
-        const nodeID = getNodeID(type);
-        addNode({ id: nodeID, type, position, data: getInitNodeData(nodeID, type) });
-      }
+      const nodeID = getNodeID(type);
+      addNode({ id: nodeID, type, position, data: getInitNodeData(nodeID, type) });
     },
     [reactFlowInstance, addNode, getNodeID]
   );
@@ -111,15 +122,15 @@ export const PipelineUI = () => {
         onInit={setReactFlowInstance}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        proOptions={proOptions}
-        snapGrid={[gridSize, gridSize]}
+        proOptions={PRO_OPTIONS}
+        snapGrid={[GRID_SIZE, GRID_SIZE]}
         connectionLineType="smoothstep"
-        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        defaultViewport={DEFAULT_VIEWPORT}
         minZoom={0.2}
         maxZoom={2}
-        deleteKeyCode={['Backspace', 'Delete']}
+        deleteKeyCode={DELETE_KEYS}
       >
-        <Background variant={BackgroundVariant.Dots} color="var(--canvas-grid)" gap={gridSize} size={1} />
+        <Background variant={BackgroundVariant.Dots} color="var(--canvas-grid)" gap={GRID_SIZE} size={1} />
         <Controls showInteractive position="bottom-left" />
         <MiniMap
           pannable
@@ -127,8 +138,8 @@ export const PipelineUI = () => {
           position="bottom-right"
           maskColor="var(--minimap-mask)"
           className="pipeline-minimap"
-          nodeColor={(node) => NODE_CONFIGS[node.type]?.accent || '#6c6cf5'}
-          nodeStrokeColor={(node) => NODE_CONFIGS[node.type]?.accent || '#6c6cf5'}
+          nodeColor={getNodeAccent}
+          nodeStrokeColor={getNodeAccent}
           nodeStrokeWidth={2}
           nodeBorderRadius={4}
         />

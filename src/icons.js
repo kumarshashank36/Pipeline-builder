@@ -68,12 +68,6 @@ const PATHS = {
       <polygon points="22 2 15 22 11 13 2 9 22 2" />
     </>
   ),
-  close: (
-    <>
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </>
-  ),
   check: <polyline points="20 6 9 17 4 12" />,
   alert: (
     <>
@@ -102,13 +96,6 @@ const PATHS = {
     <>
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-    </>
-  ),
-  logo: (
-    <>
-      <polygon points="12 2 2 7 12 12 22 7 12 2" />
-      <polyline points="2 17 12 22 22 17" />
-      <polyline points="2 12 12 17 22 12" />
     </>
   ),
   sun: (

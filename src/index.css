@@ -408,18 +408,15 @@ button {
   justify-content: center;
   min-height: 36px;
   padding: 8px 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #5145e5, #6c6cf5 48%, #22c5c2);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 8px;
+  box-shadow: 0 11px 24px -12px rgba(108, 108, 245, 0.92);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
   transition: transform 180ms cubic-bezier(.22, 1, .36, 1), box-shadow 180ms ease, background 260ms ease, border-color 260ms ease, color 260ms ease;
-}
-
-.submit-button {
-  color: #fff;
-  background: linear-gradient(135deg, #5145e5, #6c6cf5 48%, #22c5c2);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 11px 24px -12px rgba(108, 108, 245, 0.92);
 }
 
 .submit-button:hover:not(:disabled) {
@@ -481,11 +478,23 @@ button {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 
+/* Takes the space between the icon and the delete button, and allows the title
+   to ellipsize instead of forcing the header wider. */
+.node-heading {
+  display: block;
+  min-width: 0;
+  flex: 1 1 0%;
+}
+
 .node-title {
+  display: block;
+  overflow: hidden;
   color: var(--text-strong);
   font-size: 12px;
   font-weight: 650;
   letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .node-delete {
@@ -507,10 +516,6 @@ button {
 .node-delete[data-tooltip]::after {
   bottom: auto;
   top: calc(100% + 8px);
-}
-
-.node-sub {
-  display: none !important;
 }
 
 .node-body {
@@ -581,11 +586,19 @@ textarea.field-input {
   gap: 4px;
 }
 
+.ports-col--out {
+  align-items: flex-end;
+}
+
 .port {
   position: relative;
   display: flex;
   align-items: center;
   min-height: 16px;
+}
+
+.port--out {
+  justify-content: flex-end;
 }
 
 .port-label {
@@ -595,6 +608,21 @@ textarea.field-input {
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Keep labels clear of the handle dot that straddles the node edge. */
+.port--in .port-label {
+  padding-left: 12px;
+}
+
+.port--out .port-label {
+  padding-right: 12px;
+}
+
+.var-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .var-chip {

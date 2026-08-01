@@ -1,9 +1,9 @@
 // nodeConfigs.js
 // Declarative definitions for every node type.
 //
-// Adding a new node = adding one object here + one line in `ui.js`. No new
-// component, no layout code, no handle math. `BaseNode` reads these configs and
-// renders the shell, fields, and handles.
+// Adding a new node = adding one object here + one line in `ui.js` + its type
+// in NODE_TYPE_ORDER below. No new component, no layout code, no handle math.
+// `BaseNode` reads these configs and renders the shell, fields, and handles.
 //
 // Field `default` may be a literal or a function receiving ({ id }).
 // --------------------------------------------------
@@ -17,7 +17,6 @@ export const NODE_CONFIGS = {
     icon: 'input',
     accent: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981, #059669)',
-    category: 'Source & Sink',
     description: 'Pipeline entry point',
     width: 236,
     handles: [{ id: 'value', type: 'source', position: 'right' }],
@@ -44,7 +43,6 @@ export const NODE_CONFIGS = {
     icon: 'output',
     accent: '#f43f5e',
     gradient: 'linear-gradient(135deg, #f43f5e, #be123c)',
-    category: 'Source & Sink',
     description: 'Pipeline exit point',
     width: 236,
     handles: [{ id: 'value', type: 'target', position: 'left' }],
@@ -71,7 +69,6 @@ export const NODE_CONFIGS = {
     icon: 'llm',
     accent: '#8b5cf6',
     gradient: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
-    category: 'Intelligence',
     description: 'Large language model',
     width: 250,
     handles: [
@@ -104,7 +101,6 @@ export const NODE_CONFIGS = {
     icon: 'text',
     accent: '#0ea5e9',
     gradient: 'linear-gradient(135deg, #0ea5e9, #0369a1)',
-    category: 'Source & Sink',
     description: 'Template with {{variables}}',
     width: 260,
     handles: [{ id: 'output', type: 'source', position: 'right' }],
@@ -120,7 +116,6 @@ export const NODE_CONFIGS = {
     icon: 'filter',
     accent: '#f59e0b',
     gradient: 'linear-gradient(135deg, #f59e0b, #b45309)',
-    category: 'Data',
     description: 'Keep matching records',
     width: 244,
     handles: [
@@ -151,7 +146,6 @@ export const NODE_CONFIGS = {
     icon: 'transform',
     accent: '#d946ef',
     gradient: 'linear-gradient(135deg, #d946ef, #a21caf)',
-    category: 'Data',
     description: 'Reshape the payload',
     width: 244,
     handles: [
@@ -182,7 +176,6 @@ export const NODE_CONFIGS = {
     icon: 'api',
     accent: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0e7490)',
-    category: 'Integration',
     description: 'Call an external service',
     width: 262,
     handles: [
@@ -214,7 +207,6 @@ export const NODE_CONFIGS = {
     icon: 'classifier',
     accent: '#14b8a6',
     gradient: 'linear-gradient(135deg, #14b8a6, #0f766e)',
-    category: 'Intelligence',
     description: 'Assign a label to text',
     width: 250,
     handles: [
@@ -248,7 +240,6 @@ export const NODE_CONFIGS = {
     icon: 'formatter',
     accent: '#fb923c',
     gradient: 'linear-gradient(135deg, #fb923c, #c2410c)',
-    category: 'Data',
     description: 'Serialize to a format',
     width: 244,
     handles: [
@@ -274,12 +265,18 @@ export const NODE_CONFIGS = {
   },
 };
 
-// Toolbar ordering — grouped by category for scannability.
-export const NODE_CATEGORIES = [
-  { name: 'Source & Sink', types: ['customInput', 'customOutput', 'text'] },
-  { name: 'Intelligence', types: ['llm', 'classifier'] },
-  { name: 'Data', types: ['filter', 'transform', 'formatter'] },
-  { name: 'Integration', types: ['apiRequest'] },
+// Toolbar order. Grouped by intent — source/sink, intelligence, data,
+// integration — so related tiles sit next to each other in the palette.
+export const NODE_TYPE_ORDER = [
+  'customInput',
+  'customOutput',
+  'text',
+  'llm',
+  'classifier',
+  'filter',
+  'transform',
+  'formatter',
+  'apiRequest',
 ];
 
 // Resolve a field's initial value: stored data wins, then the config default.

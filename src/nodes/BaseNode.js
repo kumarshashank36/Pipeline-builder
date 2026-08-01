@@ -12,7 +12,7 @@
 // for its {{variable}} handles).
 // --------------------------------------------------
 
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { useStore } from '../store';
 import { NODE_CONFIGS, resolveFieldDefault } from './nodeConfigs';
@@ -34,7 +34,7 @@ const NodeField = ({ nodeId, field, value, onChange }) => {
     id: inputId,
     className: 'field-input nodrag',
     value: value ?? '',
-    onChange: (e) => onChange(field.name, e.target.value),
+    onChange: (event) => onChange(field.name, event.target.value),
   };
 
   let control;
@@ -78,12 +78,16 @@ const NodeField = ({ nodeId, field, value, onChange }) => {
 /* ------------------------------------------------------------------ */
 /* BaseNode                                                            */
 /* ------------------------------------------------------------------ */
+const NO_EXTRA_HANDLES = Object.freeze([]);
+
 export const BaseNode = ({
   id,
   data,
   selected,
   type,
-  extraHandles = [],
+  // A shared frozen default: a fresh `[]` literal would be a new reference on
+  // every render and would invalidate the handle memo below.
+  extraHandles = NO_EXTRA_HANDLES,
   widthOverride,
   children,
 }) => {
@@ -104,22 +108,31 @@ export const BaseNode = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const allHandles = useMemo(
-    () => [...(config.handles || []), ...extraHandles],
-    [config.handles, extraHandles]
+  const handleChange = useCallback(
+    (name, value) => updateNodeField(id, name, value),
+    [id, updateNodeField]
   );
 
-  const labeled = allHandles.filter((h) => h.label);
-  const unlabeled = allHandles.filter((h) => !h.label);
+  // Partition once per handle-set change rather than on every keystroke: the
+  // Text node re-renders this component on each character typed.
+  const { inputs, outputs, bySide } = useMemo(() => {
+    const all = [...(config.handles || []), ...extraHandles];
+    const labeled = all.filter((handle) => handle.label);
 
-  const inputs = labeled.filter((h) => h.type === 'target');
-  const outputs = labeled.filter((h) => h.type === 'source');
+    return {
+      inputs: labeled.filter((handle) => handle.type === 'target'),
+      outputs: labeled.filter((handle) => handle.type === 'source'),
+      // Unlabeled handles sit flush on the edge, evenly distributed per side.
+      bySide: all
+        .filter((handle) => !handle.label)
+        .reduce((acc, handle) => {
+          (acc[handle.position] = acc[handle.position] || []).push(handle);
+          return acc;
+        }, {}),
+    };
+  }, [config.handles, extraHandles]);
 
-  // Unlabeled handles sit flush on the edge, evenly distributed per side.
-  const bySide = unlabeled.reduce((acc, handle) => {
-    (acc[handle.position] = acc[handle.position] || []).push(handle);
-    return acc;
-  }, {});
+  const hasPorts = inputs.length > 0 || outputs.length > 0;
 
   return (
     <div
@@ -144,9 +157,8 @@ export const BaseNode = ({
         <span className="node-icon" style={{ background: config.gradient }}>
           <Icon name={config.icon} size={13} strokeWidth={2.2} />
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="node-title block truncate">{config.label}</span>
-          <span className="node-sub block truncate">{id}</span>
+        <span className="node-heading">
+          <span className="node-title">{config.label}</span>
         </span>
         <button
           className="icon-button node-delete nodrag nopan"
@@ -168,7 +180,7 @@ export const BaseNode = ({
               nodeId={id}
               field={field}
               value={resolveFieldDefault(field, { id, data })}
-              onChange={(name, value) => updateNodeField(id, name, value)}
+              onChange={handleChange}
             />
           ))}
           {children}
@@ -176,25 +188,25 @@ export const BaseNode = ({
       )}
 
       {/* Named ports ------------------------------------------------- */}
-      {labeled.length > 0 && (
+      {hasPorts && (
         <div className="node-ports">
           <div className="ports-col">
             {inputs.map((handle) => (
-              <div className="port" key={handle.id}>
+              <div className="port port--in" key={handle.id}>
                 <Handle
                   type="target"
                   position={Position.Left}
                   id={`${id}-${handle.id}`}
                   className={handle.variable ? 'handle-var' : undefined}
                 />
-                <span className="port-label pl-3">{handle.label}</span>
+                <span className="port-label">{handle.label}</span>
               </div>
             ))}
           </div>
-          <div className="ports-col items-end">
+          <div className="ports-col ports-col--out">
             {outputs.map((handle) => (
-              <div className="port justify-end" key={handle.id}>
-                <span className="port-label pr-3">{handle.label}</span>
+              <div className="port port--out" key={handle.id}>
+                <span className="port-label">{handle.label}</span>
                 <Handle type="source" position={Position.Right} id={`${id}-${handle.id}`} />
               </div>
             ))}

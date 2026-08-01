@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Local recovery backup created when the original corrupted Git metadata was replaced.
+.git.corrupt-*/

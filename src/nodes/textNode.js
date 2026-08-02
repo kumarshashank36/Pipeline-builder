@@ -21,11 +21,20 @@ const MIN_WIDTH = 248;
 const MAX_WIDTH = 360;
 const MIN_TEXTAREA_HEIGHT = 62;
 const MAX_TEXTAREA_HEIGHT = 320;
-const CHAR_WIDTH = 7.1; // 12px monospace advance width
-const HORIZONTAL_CHROME = 40; // node padding + borders
-const WRAP_COLUMNS = 42;
-const LINE_HEIGHT = 18;
-const TEXTAREA_VERTICAL_CHROME = 24;
+const HORIZONTAL_CHROME = 36; // textarea chrome + node body padding
+
+// The textarea inherits the app's proportional UI font, so a per-character
+// estimate expands narrow text (for example, `i` and spaces) too early.
+const textMeasureContext = document.createElement('canvas').getContext('2d');
+const TEXT_FONT = '12px Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+
+const getLongestLineWidth = (text) => {
+  if (!textMeasureContext) return 0;
+  textMeasureContext.font = TEXT_FONT;
+  return Math.ceil(
+    text.split('\n').reduce((widest, line) => Math.max(widest, textMeasureContext.measureText(line).width), 0)
+  );
+};
 
 export const extractVariables = (text = '') => {
   const seen = [];
@@ -53,38 +62,26 @@ export const TextNode = ({ id, data, selected }) => {
 
   const variables = useMemo(() => extractVariables(text), [text]);
 
-  // Width tracks the longest line, clamped to a sensible range.
+  // Width tracks the rendered longest line, clamped to a sensible range.
   const width = useMemo(() => {
-    const longest = text.split('\n').reduce((max, line) => Math.max(max, line.length), 0);
-    return Math.min(
-      MAX_WIDTH,
-      Math.max(MIN_WIDTH, Math.round(longest * CHAR_WIDTH) + HORIZONTAL_CHROME)
-    );
+    return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, getLongestLineWidth(text) + HORIZONTAL_CHROME));
   }, [text]);
 
-  // Keep width useful for short content, then favour vertical growth. This
-  // makes longer single-line templates wrap instead of becoming a wide node.
-  const estimatedTextHeight = useMemo(() => {
-    const visualLines = text.split('\n').reduce(
-      (count, line) => count + Math.max(1, Math.ceil(line.length / WRAP_COLUMNS)),
-      0
-    );
-    return visualLines * LINE_HEIGHT + TEXTAREA_VERTICAL_CHROME;
-  }, [text]);
-
-  // Height follows content. useLayoutEffect avoids a visible reflow jump.
+  // Height follows the browser's real wrap layout. A fixed character-count
+  // estimate expands too soon while the node is still widening for a line.
+  // useLayoutEffect avoids a visible reflow jump.
   useLayoutEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = 'auto';
     const next = Math.min(
       MAX_TEXTAREA_HEIGHT,
-      Math.max(MIN_TEXTAREA_HEIGHT, el.scrollHeight, estimatedTextHeight)
+      Math.max(MIN_TEXTAREA_HEIGHT, el.scrollHeight)
     );
     el.style.height = `${next}px`;
     el.style.overflowY = el.scrollHeight > MAX_TEXTAREA_HEIGHT ? 'auto' : 'hidden';
     setTextareaHeight(next);
-  }, [text, width, estimatedTextHeight]);
+  }, [text, width]);
 
   // ReactFlow caches handle geometry; tell it to re-measure whenever the
   // handle set or the node's size changes, otherwise edges detach visually.
